@@ -1,0 +1,126 @@
+'use client';
+
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { useState } from 'react';
+import { Home, TrendingUp, BarChart3, Users, BookOpen, DollarSign, Newspaper, Calendar, Bell, User, Menu, X, Sun, Moon, Search, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export default function RootLayout({ children }) {
+  const [darkMode, setDarkMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const menuItems = [
+    { id: 'home', icon: Home, label: '홈', path: '/' },
+    { id: 'crypto-chart', icon: TrendingUp, label: '코인 차트', path: '/charts/crypto' },
+    { id: 'stock-chart', icon: BarChart3, label: '주식 차트', path: '/charts/stocks' },
+    { id: 'community', icon: Users, label: '커뮤니티', path: '/community' },
+    { id: 'journal', icon: BookOpen, label: '매매일지', path: '/trading-journal' },
+    { id: 'portfolio', icon: DollarSign, label: '수익률 관리', path: '/portfolio' },
+    { id: 'news', icon: Newspaper, label: '뉴스', path: '/news' },
+    { id: 'calendar', icon: Calendar, label: '경제 캘린더', path: '/calendar' },
+    { id: 'sns', icon: Bell, label: 'SNS 피드', path: '/sns' },
+    { id: 'profile', icon: User, label: '내정보', path: '/profile' },
+  ];
+
+  const isHomePage = pathname === '/';
+
+  return (
+    <html lang="ko" className={darkMode ? 'dark' : ''}>
+      <body className={`${inter.className} ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+        {/* Header */}
+        <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50`}>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center space-x-4">
+              {!isHomePage && (
+                <button
+                  onClick={() => router.push('/')}
+                  className={`p-2 rounded-lg flex items-center space-x-2 ${
+                    darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <ArrowLeft size={20} />
+                  <span className="hidden md:inline text-sm font-medium">홈으로</span>
+                </button>
+              )}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+              <Link href="/">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer">
+                  투자정보 플랫폼
+                </h1>
+              </Link>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <div className={`hidden md:flex items-center rounded-lg px-4 py-2 ${
+                darkMode ? 'bg-gray-700' : 'bg-gray-100'
+              }`}>
+                <Search size={18} className="text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="뉴스, 종목명, 티커 검색..."
+                  className={`bg-transparent border-none outline-none ml-2 w-64 ${
+                    darkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
+                  }`}
+                />
+              </div>
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button 
+                onClick={() => router.push('/login')}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              >
+                <User size={18} />
+                <span className="hidden md:inline">로그인</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex min-h-screen">
+          {sidebarOpen && (
+            <aside className={`w-64 border-r ${
+              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
+              <nav className="p-4 space-y-2">
+                {menuItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.path;
+                  return (
+                    <Link key={item.id} href={item.path}>
+                      <div className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
+                        isActive 
+                          ? 'bg-blue-600 text-white' 
+                          : darkMode 
+                            ? 'hover:bg-gray-700 text-gray-200' 
+                            : 'hover:bg-gray-100 text-gray-900'
+                      }`}>
+                        <Icon size={20} />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </nav>
+            </aside>
+          )}
+          <main className="flex-1">{children}</main>
+        </div>
+      </body>
+    </html>
+  );
+}
