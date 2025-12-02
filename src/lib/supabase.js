@@ -1,169 +1,281 @@
-// src/app/lib/supabase.js
-'use client';
-
 import { createClient } from '@supabase/supabase-js';
 
-// .env.local 에 설정해 둔 환경변수
+// 환경변수에서 가져오기
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Supabase 클라이언트 생성
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// ------------------------------------------------------
-// db: Supabase 쿼리를 감싸는 래퍼 (useSupabase 훅에서 사용)
-// ------------------------------------------------------
+// 🔥 간편한 데이터베이스 함수들
 export const db = {
-  // 포트폴리오 관련 메서드
+  // ===== Users =====
+  users: {
+    getAll: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      return { data, error };
+    },
+    
+    // ID로 사용자 찾기
+    getById: async (id) => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+      return { data, error };
+    },
+    
+    // 이메일로 사용자 찾기
+    getByEmail: async (email) => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .single();
+      return { data, error };
+    },
+    
+    // 사용자 생성
+    create: async (userData) => {
+      const { data, error } = await supabase
+        .from('users')
+        .insert([userData])
+        .select()
+        .single();
+      return { data, error };
+    },
+    
+    // 사용자 업데이트
+    update: async (id, updates) => {
+      const { data, error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      return { data, error };
+    },
+  },
+
+  // ===== Portfolios =====
   portfolios: {
-    async getAll() {
-      return supabase
+    // 모든 포트폴리오 가져오기 (투자 내역 포함)
+    getAll: async () => {
+      const { data, error } = await supabase
         .from('portfolios')
-        .select('id, name, description, user_id, created_at, updated_at');
+        .select(`
+          *,
+          user:users(*),
+          investments(
+            *,
+            transactions(*)
+          )
+        `);
+      return { data, error };
     },
-    async getByUserId(userId) {
-      return supabase
+    
+    // 사용자별 포트폴리오
+    getByUserId: async (userId) => {
+      const { data, error } = await supabase
         .from('portfolios')
-        .select('id, name, description, user_id, created_at, updated_at')
+        .select(`
+          *,
+          investments(
+            *,
+            transactions(*)
+          )
+        `)
         .eq('user_id', userId);
+      return { data, error };
     },
-    async getById(id) {
-      return supabase
+    
+    // 포트폴리오 생성
+    create: async (portfolioData) => {
+      const { data, error } = await supabase
         .from('portfolios')
-        .select('id, name, description, user_id, created_at, updated_at')
-        .eq('id', id)
+        .insert([portfolioData])
+        .select()
         .single();
+      return { data, error };
     },
-    async create(data) {
-      return supabase.from('portfolios').insert(data).select().single();
-    },
-    async update(id, data) {
-      return supabase
+    
+    // 포트폴리오 업데이트
+    update: async (id, updates) => {
+      const { data, error } = await supabase
         .from('portfolios')
-        .update(data)
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
+      return { data, error };
     },
-    async delete(id) {
-      return supabase.from('portfolios').delete().eq('id', id);
+    
+    // 포트폴리오 삭제
+    delete: async (id) => {
+      const { error } = await supabase
+        .from('portfolios')
+        .delete()
+        .eq('id', id);
+      return { error };
     },
   },
 
-  // 투자(Investments) 관련 메서드
+  // ===== Investments =====
   investments: {
-    async getAll() {
-      return supabase
+    // 모든 투자 가져오기
+    getAll: async () => {
+      const { data, error } = await supabase
         .from('investments')
-        .select('id, symbol, name, asset_type, portfolio_id, created_at, updated_at, transactions(*)');
+        .select(`
+          *,
+          portfolio:portfolios(*),
+          transactions(*)
+        `);
+      return { data, error };
     },
-    async getByPortfolioId(portfolioId) {
-      return supabase
+    
+    // 포트폴리오별 투자
+    getByPortfolioId: async (portfolioId) => {
+      const { data, error } = await supabase
         .from('investments')
-        .select('id, symbol, name, asset_type, portfolio_id, created_at, updated_at, transactions(*)')
+        .select(`
+          *,
+          transactions(*)
+        `)
         .eq('portfolio_id', portfolioId);
+      return { data, error };
     },
-    async create(data) {
-      return supabase.from('investments').insert(data).select().single();
-    },
-    async update(id, data) {
-      return supabase
+    
+    // 투자 생성
+    create: async (investmentData) => {
+      const { data, error } = await supabase
         .from('investments')
-        .update(data)
+        .insert([investmentData])
+        .select()
+        .single();
+      return { data, error };
+    },
+    
+    // 투자 업데이트
+    update: async (id, updates) => {
+      const { data, error } = await supabase
+        .from('investments')
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
+      return { data, error };
     },
-    async delete(id) {
-      return supabase.from('investments').delete().eq('id', id);
+    
+    // 투자 삭제
+    delete: async (id) => {
+      const { error } = await supabase
+        .from('investments')
+        .delete()
+        .eq('id', id);
+      return { error };
     },
   },
 
-  // 거래(Transactions) 관련 메서드
+  // ===== Transactions =====
   transactions: {
-    async getAll() {
-      return supabase
+    // 모든 거래 가져오기
+    getAll: async () => {
+      const { data, error } = await supabase
         .from('transactions')
-        .select(
-          'id, type, quantity, price, total_amount, fee, date, note, investment_id, created_at, updated_at'
-        );
+        .select(`
+          *,
+          investment:investments(*)
+        `)
+        .order('date', { ascending: false });
+      return { data, error };
     },
-    async getByInvestmentId(investmentId) {
-      return supabase
+    
+    // 투자별 거래 내역
+    getByInvestmentId: async (investmentId) => {
+      const { data, error } = await supabase
         .from('transactions')
-        .select(
-          'id, type, quantity, price, total_amount, fee, date, note, investment_id, created_at, updated_at'
-        )
-        .eq('investment_id', investmentId);
+        .select('*')
+        .eq('investment_id', investmentId)
+        .order('date', { ascending: false });
+      return { data, error };
     },
-    async create(data) {
-      return supabase.from('transactions').insert(data).select().single();
-    },
-    async update(id, data) {
-      return supabase
+    
+    // 거래 생성
+    create: async (transactionData) => {
+      const { data, error } = await supabase
         .from('transactions')
-        .update(data)
+        .insert([transactionData])
+        .select()
+        .single();
+      return { data, error };
+    },
+    
+    // 거래 업데이트
+    update: async (id, updates) => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
+      return { data, error };
     },
-    async delete(id) {
-      return supabase.from('transactions').delete().eq('id', id);
+    
+    // 거래 삭제
+    delete: async (id) => {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+      return { error };
     },
   },
 };
 
-// ------------------------------------------------------
-// calculations: 수익률/자산 배분 등 계산 유틸 (useSupabase 훅에서 import)
-// ------------------------------------------------------
-export const calculations = {
-  // 거래 배열 기준 순투자금 계산
-  calculatePortfolioMetrics(transactions = []) {
-    let totalInvested = 0;
-
-    transactions.forEach((t) => {
-      const amount = Number(t.total_amount ?? 0);
-      if (t.type === 'BUY') {
-        totalInvested += amount;
-      } else if (t.type === 'SELL') {
-        totalInvested -= amount;
+// 🧮 계산 헬퍼 함수들
+export const calculate = {
+  // 포트폴리오 수익률 계산
+  portfolioROI: (totalValue, totalInvested) => {
+    if (totalInvested === 0) return 0;
+    return ((totalValue - totalInvested) / totalInvested) * 100;
+  },
+  
+  // 평균 매입가 계산
+  averageCost: (transactions) => {
+    let totalAmount = 0;
+    let totalQuantity = 0;
+    
+    transactions.forEach(tx => {
+      if (tx.type === 'BUY') {
+        totalAmount += tx.total_amount + (tx.fee || 0);
+        totalQuantity += tx.quantity;
       }
     });
-
-    return {
-      totalInvested,
-    };
+    
+    return totalQuantity > 0 ? totalAmount / totalQuantity : 0;
   },
+};
 
-  // 현재 가치와 총 투자금으로 수익률 계산 (퍼센트)
-  calculateROI(currentValue, totalInvested) {
-    if (!totalInvested) return 0;
-    const roi = ((currentValue - totalInvested) / totalInvested) * 100;
-    return Number(roi.toFixed(2));
+// 💰 포맷 함수들
+export const format = {
+  // 통화 포맷
+  currency: (amount) => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW',
+    }).format(amount);
   },
-
-  // 실현 손익: SELL 거래들의 total_amount 합으로 단순 계산
-  calculateRealizedGain(transactions = []) {
-    return transactions
-      .filter((t) => t.type === 'SELL')
-      .reduce((sum, t) => sum + Number(t.total_amount ?? 0), 0);
+  
+  // 퍼센트 포맷
+  percent: (value) => {
+    const sign = value >= 0 ? '+' : '';
+    return `${sign}${value.toFixed(2)}%`;
   },
-
-  // 자산군별 비중 계산
-  // investments: 각 investment 가 transactions 를 포함하고 있다고 가정
-  calculateAssetAllocation(investments = []) {
-    const result = {};
-
-    investments.forEach((inv) => {
-      const type = inv.asset_type || 'OTHER';
-      if (!result[type]) {
-        result[type] = { type, value: 0 };
-      }
-
-      const metrics = this.calculatePortfolioMetrics(inv.transactions || []);
-      result[type].value += metrics.totalInvested;
-    });
-
-    return result;
+  
+  // 날짜 포맷
+  date: (date) => {
+    return new Date(date).toLocaleDateString('ko-KR');
   },
 };

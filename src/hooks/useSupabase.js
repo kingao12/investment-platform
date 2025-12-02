@@ -1,52 +1,32 @@
-// hooks/useSupabase.js
-import { useEffect, useState } from 'react';
-import { db, calculations } from '../lib/supabase';
+'use client';
 
-// 포트폴리오 훅
+import { useState, useEffect } from 'react';
+import { db } from '@/lib/supabase';
+
+// 🔥 포트폴리오 훅
 export function usePortfolios(userId = null) {
   const [portfolios, setPortfolios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 데이터 가져오기
   const fetchPortfolios = async () => {
     try {
       setLoading(true);
-      let query;
+      let result;
       
       if (userId) {
-        query = await db.portfolios.getByUserId(userId);
+        result = await db.portfolios.getByUserId(userId);
       } else {
-        query = await db.portfolios.getAll();
+        result = await db.portfolios.getAll();
       }
 
-      if (query.error) throw query.error;
-
-      // 메트릭 계산
-      const portfoliosWithMetrics = query.data.map((portfolio) => {
-        let totalInvested = 0;
-        let totalValue = 0;
-
-        portfolio.investments?.forEach((investment) => {
-          const metrics = calculations.calculatePortfolioMetrics(
-            investment.transactions || []
-          );
-          totalInvested += metrics.totalInvested;
-          totalValue += metrics.totalInvested; // 나중에 실시간 가격으로 대체
-        });
-
-        const roi = calculations.calculateROI(totalValue, totalInvested);
-
-        return {
-          ...portfolio,
-          totalInvested,
-          totalValue,
-          roi,
-        };
-      });
-
-      setPortfolios(portfoliosWithMetrics);
+      if (result.error) throw result.error;
+      
+      setPortfolios(result.data || []);
       setError(null);
     } catch (err) {
+      console.error('Error fetching portfolios:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -57,35 +37,44 @@ export function usePortfolios(userId = null) {
     fetchPortfolios();
   }, [userId]);
 
-  const createPortfolio = async (data) => {
+  // 포트폴리오 생성
+  const createPortfolio = async (portfolioData) => {
     try {
-      const result = await db.portfolios.create(data);
+      const result = await db.portfolios.create(portfolioData);
       if (result.error) throw result.error;
-      await fetchPortfolios();
+      
+      await fetchPortfolios(); // 새로고침
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error creating portfolio:', err);
       return { success: false, error: err.message };
     }
   };
 
-  const updatePortfolio = async (id, data) => {
+  // 포트폴리오 업데이트
+  const updatePortfolio = async (id, updates) => {
     try {
-      const result = await db.portfolios.update(id, data);
+      const result = await db.portfolios.update(id, updates);
       if (result.error) throw result.error;
+      
       await fetchPortfolios();
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error updating portfolio:', err);
       return { success: false, error: err.message };
     }
   };
 
+  // 포트폴리오 삭제
   const deletePortfolio = async (id) => {
     try {
       const result = await db.portfolios.delete(id);
       if (result.error) throw result.error;
+      
       await fetchPortfolios();
       return { success: true };
     } catch (err) {
+      console.error('Error deleting portfolio:', err);
       return { success: false, error: err.message };
     }
   };
@@ -101,36 +90,7 @@ export function usePortfolios(userId = null) {
   };
 }
 
-// 단일 포트폴리오 훅
-export function usePortfolio(id) {
-  const [portfolio, setPortfolio] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchPortfolio = async () => {
-    if (!id) return;
-    
-    try {
-      setLoading(true);
-      const result = await db.portfolios.getById(id);
-      if (result.error) throw result.error;
-      setPortfolio(result.data);
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPortfolio();
-  }, [id]);
-
-  return { portfolio, loading, error, refresh: fetchPortfolio };
-}
-
-// 투자 훅
+// 🔥 투자 훅
 export function useInvestments(portfolioId = null) {
   const [investments, setInvestments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -139,38 +99,20 @@ export function useInvestments(portfolioId = null) {
   const fetchInvestments = async () => {
     try {
       setLoading(true);
-      let query;
+      let result;
 
       if (portfolioId) {
-        query = await db.investments.getByPortfolioId(portfolioId);
+        result = await db.investments.getByPortfolioId(portfolioId);
       } else {
-        query = await db.investments.getAll();
+        result = await db.investments.getAll();
       }
 
-      if (query.error) throw query.error;
-
-      // 메트릭 계산
-      const investmentsWithMetrics = query.data.map((investment) => {
-        const metrics = calculations.calculatePortfolioMetrics(
-          investment.transactions || []
-        );
-        const realizedGain = calculations.calculateRealizedGain(
-          investment.transactions || []
-        );
-
-        return {
-          ...investment,
-          metrics: {
-            ...metrics,
-            realizedGain,
-            currentValue: metrics.totalInvested, // 나중에 실시간 가격으로 대체
-          },
-        };
-      });
-
-      setInvestments(investmentsWithMetrics);
+      if (result.error) throw result.error;
+      
+      setInvestments(result.data || []);
       setError(null);
     } catch (err) {
+      console.error('Error fetching investments:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -181,24 +123,28 @@ export function useInvestments(portfolioId = null) {
     fetchInvestments();
   }, [portfolioId]);
 
-  const createInvestment = async (data) => {
+  const createInvestment = async (investmentData) => {
     try {
-      const result = await db.investments.create(data);
+      const result = await db.investments.create(investmentData);
       if (result.error) throw result.error;
+      
       await fetchInvestments();
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error creating investment:', err);
       return { success: false, error: err.message };
     }
   };
 
-  const updateInvestment = async (id, data) => {
+  const updateInvestment = async (id, updates) => {
     try {
-      const result = await db.investments.update(id, data);
+      const result = await db.investments.update(id, updates);
       if (result.error) throw result.error;
+      
       await fetchInvestments();
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error updating investment:', err);
       return { success: false, error: err.message };
     }
   };
@@ -207,9 +153,11 @@ export function useInvestments(portfolioId = null) {
     try {
       const result = await db.investments.delete(id);
       if (result.error) throw result.error;
+      
       await fetchInvestments();
       return { success: true };
     } catch (err) {
+      console.error('Error deleting investment:', err);
       return { success: false, error: err.message };
     }
   };
@@ -225,7 +173,7 @@ export function useInvestments(portfolioId = null) {
   };
 }
 
-// 거래 훅
+// 🔥 거래 훅
 export function useTransactions(investmentId = null) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,18 +182,20 @@ export function useTransactions(investmentId = null) {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
-      let query;
+      let result;
 
       if (investmentId) {
-        query = await db.transactions.getByInvestmentId(investmentId);
+        result = await db.transactions.getByInvestmentId(investmentId);
       } else {
-        query = await db.transactions.getAll();
+        result = await db.transactions.getAll();
       }
 
-      if (query.error) throw query.error;
-      setTransactions(query.data);
+      if (result.error) throw result.error;
+      
+      setTransactions(result.data || []);
       setError(null);
     } catch (err) {
+      console.error('Error fetching transactions:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -256,35 +206,42 @@ export function useTransactions(investmentId = null) {
     fetchTransactions();
   }, [investmentId]);
 
-  const createTransaction = async (data) => {
+  const createTransaction = async (transactionData) => {
     try {
-      // 총액 계산
-      const totalAmount = data.quantity * data.price;
-      const transactionData = {
-        ...data,
-        total_amount: totalAmount,
+      // 총액 자동 계산
+      const dataWithTotal = {
+        ...transactionData,
+        total_amount: transactionData.quantity * transactionData.price,
       };
-
-      const result = await db.transactions.create(transactionData);
+      
+      const result = await db.transactions.create(dataWithTotal);
       if (result.error) throw result.error;
+      
       await fetchTransactions();
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error creating transaction:', err);
       return { success: false, error: err.message };
     }
   };
 
-  const updateTransaction = async (id, data) => {
+  const updateTransaction = async (id, updates) => {
     try {
-      if (data.quantity && data.price) {
-        data.total_amount = data.quantity * data.price;
+      // 수량이나 가격이 변경되면 총액도 다시 계산
+      if (updates.quantity || updates.price) {
+        const current = transactions.find(t => t.id === id);
+        const quantity = updates.quantity || current.quantity;
+        const price = updates.price || current.price;
+        updates.total_amount = quantity * price;
       }
       
-      const result = await db.transactions.update(id, data);
+      const result = await db.transactions.update(id, updates);
       if (result.error) throw result.error;
+      
       await fetchTransactions();
       return { success: true, data: result.data };
     } catch (err) {
+      console.error('Error updating transaction:', err);
       return { success: false, error: err.message };
     }
   };
@@ -293,9 +250,11 @@ export function useTransactions(investmentId = null) {
     try {
       const result = await db.transactions.delete(id);
       if (result.error) throw result.error;
+      
       await fetchTransactions();
       return { success: true };
     } catch (err) {
+      console.error('Error deleting transaction:', err);
       return { success: false, error: err.message };
     }
   };
@@ -311,58 +270,34 @@ export function useTransactions(investmentId = null) {
   };
 }
 
-// 대시보드 통계 훅
-export function useDashboardStats() {
-  const [stats, setStats] = useState(null);
+// 🔥 사용자 훅
+export function useUser(userId) {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-
-      // 모든 데이터 가져오기
-      const [portfoliosResult, investmentsResult, transactionsResult] = 
-        await Promise.all([
-          db.portfolios.getAll(),
-          db.investments.getAll(),
-          db.transactions.getAll(),
-        ]);
-
-      if (portfoliosResult.error) throw portfoliosResult.error;
-      if (investmentsResult.error) throw investmentsResult.error;
-      if (transactionsResult.error) throw transactionsResult.error;
-
-      // 통계 계산
-      const assetAllocation = calculations.calculateAssetAllocation(
-        investmentsResult.data
-      );
-
-      let totalValue = 0;
-      Object.values(assetAllocation).forEach((asset) => {
-        totalValue += asset.value;
-      });
-
-      setStats({
-        portfolioCount: portfoliosResult.data.length,
-        investmentCount: investmentsResult.data.length,
-        transactionCount: transactionsResult.data.length,
-        totalValue,
-        assetAllocation,
-        recentTransactions: transactionsResult.data.slice(0, 10),
-      });
-
-      setError(null);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchStats();
-  }, []);
+    if (!userId) return;
 
-  return { stats, loading, error, refresh: fetchStats };
+    const fetchUser = async () => {
+      try {
+        setLoading(true);
+        const result = await db.users.getById(userId);
+        
+        if (result.error) throw result.error;
+        
+        setUser(result.data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [userId]);
+
+  return { user, loading, error };
 }
