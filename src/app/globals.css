@@ -99,3 +99,21 @@ main {
 .dark .login-card-bg .bg-blue-50 {
   color: #93c5fd !important;
 }
+
+/* 🔥 포트폴리오 카드 강제 적용 */
+.portfolio-card {
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .portfolio-card {
+  background-color: #1f2937 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 포트폴리오 카드 내부 텍스트 */
+.portfolio-card h3,
+.portfolio-card p,
+.portfolio-card span {
+  color: inherit !important;
+}

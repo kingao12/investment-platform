@@ -1,4 +1,3 @@
-// src/app/dashboard/page.js
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -207,7 +206,7 @@ export default function DashboardPage() {
               <div
                 key={portfolio.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-700 
-                         hover:shadow-lg dark:hover:shadow-gray-600 transition p-6"
+                         hover:shadow-lg dark:hover:shadow-gray-600 transition p-6 portfolio-card"
               >
                 <div className="flex justify-between items-start mb-4">
                   <div>
