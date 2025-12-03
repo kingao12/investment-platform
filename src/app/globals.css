@@ -26,11 +26,24 @@ body {
 }
 
 /* 🔥 body 배경색 강제 적용 */
-body {
+body,
+html {
   background-color: #f9fafb !important;
 }
 
-.dark body {
+.dark body,
+.dark html {
+  background-color: #111827 !important;
+}
+
+/* 🔥 모든 페이지 배경 강제 적용 */
+.dashboard-page,
+main {
+  background-color: #f9fafb !important;
+}
+
+.dark .dashboard-page,
+.dark main {
   background-color: #111827 !important;
 }
 
