@@ -7,7 +7,7 @@ import { db } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true); // true = 로그인, false = 회원가입
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -16,23 +16,20 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 입력 변경 핸들러
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
-    setError(''); // 에러 초기화
+    setError('');
   };
 
-  // 로그인
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // 이메일로 사용자 찾기
       const result = await db.users.getByEmail(formData.email);
       
       if (result.error || !result.data) {
@@ -41,19 +38,15 @@ export default function LoginPage() {
         return;
       }
 
-      // 비밀번호 확인 (실제로는 해시된 비밀번호와 비교해야 함)
       if (result.data.password !== formData.password) {
         setError('이메일 또는 비밀번호가 잘못되었습니다.');
         setLoading(false);
         return;
       }
 
-      // 로그인 성공
-      // 실제로는 JWT 토큰을 저장하거나 세션 관리를 해야 함
       localStorage.setItem('userId', result.data.id);
       localStorage.setItem('userName', result.data.name);
       
-      // 대시보드로 이동
       router.push('/dashboard');
     } catch (err) {
       console.error('Login error:', err);
@@ -63,14 +56,12 @@ export default function LoginPage() {
     }
   };
 
-  // 회원가입
   const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
-      // 이메일 중복 확인
       const existingUser = await db.users.getByEmail(formData.email);
       
       if (existingUser.data) {
@@ -79,10 +70,9 @@ export default function LoginPage() {
         return;
       }
 
-      // 사용자 생성
       const result = await db.users.create({
         email: formData.email,
-        password: formData.password, // 실제로는 해시해야 함
+        password: formData.password,
         name: formData.name,
       });
 
@@ -92,9 +82,8 @@ export default function LoginPage() {
         return;
       }
 
-      // 회원가입 성공
       alert('회원가입이 완료되었습니다!');
-      setIsLogin(true); // 로그인 화면으로 전환
+      setIsLogin(true);
       setFormData({ email: '', password: '', name: '' });
     } catch (err) {
       console.error('Signup error:', err);
@@ -105,36 +94,42 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
         {/* 헤더 */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Investment Tracker
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             {isLogin ? '로그인하여 포트폴리오를 관리하세요' : '새 계정을 만드세요'}
           </p>
         </div>
 
         {/* 탭 전환 */}
-        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
+        <div className="flex mb-6 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           <button
-            onClick={() => setIsLogin(true)}
+            onClick={() => {
+              setIsLogin(true);
+              setError('');
+            }}
             className={`flex-1 py-2 px-4 rounded-md transition ${
               isLogin
-                ? 'bg-white text-blue-600 font-semibold shadow'
-                : 'text-gray-600'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 font-semibold shadow'
+                : 'text-gray-600 dark:text-gray-300'
             }`}
           >
             로그인
           </button>
           <button
-            onClick={() => setIsLogin(false)}
+            onClick={() => {
+              setIsLogin(false);
+              setError('');
+            }}
             className={`flex-1 py-2 px-4 rounded-md transition ${
               !isLogin
-                ? 'bg-white text-blue-600 font-semibold shadow'
-                : 'text-gray-600'
+                ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 font-semibold shadow'
+                : 'text-gray-600 dark:text-gray-300'
             }`}
           >
             회원가입
@@ -143,7 +138,7 @@ export default function LoginPage() {
 
         {/* 에러 메시지 */}
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
@@ -153,7 +148,7 @@ export default function LoginPage() {
           {/* 회원가입시 이름 입력 */}
           {!isLogin && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 이름
               </label>
               <input
@@ -162,7 +157,13 @@ export default function LoginPage() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                         bg-white dark:bg-gray-700 
+                         text-gray-900 dark:text-white
+                         placeholder-gray-400 dark:placeholder-gray-500
+                         focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 
+                         focus:border-transparent
+                         transition"
                 placeholder="홍길동"
               />
             </div>
@@ -170,7 +171,7 @@ export default function LoginPage() {
 
           {/* 이메일 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               이메일
             </label>
             <input
@@ -179,14 +180,20 @@ export default function LoginPage() {
               value={formData.email}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                       bg-white dark:bg-gray-700 
+                       text-gray-900 dark:text-white
+                       placeholder-gray-400 dark:placeholder-gray-500
+                       focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 
+                       focus:border-transparent
+                       transition"
               placeholder="example@email.com"
             />
           </div>
 
           {/* 비밀번호 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               비밀번호
             </label>
             <input
@@ -196,7 +203,13 @@ export default function LoginPage() {
               onChange={handleChange}
               required
               minLength={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg 
+                       bg-white dark:bg-gray-700 
+                       text-gray-900 dark:text-white
+                       placeholder-gray-400 dark:placeholder-gray-500
+                       focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 
+                       focus:border-transparent
+                       transition"
               placeholder="최소 6자 이상"
             />
           </div>
@@ -205,17 +218,25 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="w-full py-3 bg-blue-600 dark:bg-blue-500 text-white rounded-lg font-semibold 
+                     hover:bg-blue-700 dark:hover:bg-blue-600 
+                     transition 
+                     disabled:bg-gray-400 dark:disabled:bg-gray-600 
+                     disabled:cursor-not-allowed"
           >
             {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
           </button>
         </form>
 
         {/* 테스트 안내 */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-          <strong>테스트 계정:</strong>
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
+          <strong>💡 시작하기:</strong>
           <br />
-          먼저 회원가입을 해주세요!
+          {isLogin ? (
+            <>계정이 없으신가요? 먼저 회원가입을 해주세요!</>
+          ) : (
+            <>회원가입 후 로그인하여 포트폴리오를 만들어보세요!</>
+          )}
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, TrendingUp, BarChart3, Users, BookOpen, DollarSign, Newspaper, Calendar, Bell, User, Menu, X, Sun, Moon, Search, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -12,8 +12,26 @@ const inter = Inter({ subsets: ['latin'] });
 export default function RootLayout({ children }) {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    setMounted(true);
+    const savedDarkMode = localStorage.getItem('darkMode');
+    if (savedDarkMode !== null) {
+      setDarkMode(savedDarkMode === 'true');
+    } else {
+      const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setDarkMode(systemDarkMode);
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('darkMode', newDarkMode.toString());
+  };
 
   const menuItems = [
     { id: 'home', icon: Home, label: '홈', path: '/' },
@@ -29,6 +47,17 @@ export default function RootLayout({ children }) {
   ];
 
   const isHomePage = pathname === '/';
+  if (!mounted) {
+    return (
+      <html lang="ko">
+        <body className={`${inter.className} bg-gray-50 text-gray-900`}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-gray-600">로딩 중...</div>
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang="ko" className={darkMode ? 'dark' : ''}>
@@ -75,14 +104,17 @@ export default function RootLayout({ children }) {
                 />
               </div>
               <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-lg transition-colors ${
+                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                }`}
+                title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
               <button 
                 onClick={() => router.push('/login')}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <User size={18} />
                 <span className="hidden md:inline">로그인</span>
