@@ -1,3 +1,4 @@
+// src/lib/supabase.js
 import { createClient } from '@supabase/supabase-js';
 
 // 환경변수에서 가져오기
@@ -11,6 +12,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey);
 export const db = {
   // ===== Users =====
   users: {
+    // 모든 사용자 가져오기
     getAll: async () => {
       const { data, error } = await supabase.from('users').select('*');
       return { data, error };
@@ -72,6 +74,23 @@ export const db = {
             transactions(*)
           )
         `);
+      return { data, error };
+    },
+    
+    // ID로 포트폴리오 가져오기
+    getById: async (id) => {
+      const { data, error } = await supabase
+        .from('portfolios')
+        .select(`
+          *,
+          user:users(*),
+          investments(
+            *,
+            transactions(*)
+          )
+        `)
+        .eq('id', id)
+        .single();
       return { data, error };
     },
     
@@ -236,6 +255,29 @@ export const db = {
 
 // 🧮 계산 헬퍼 함수들
 export const calculate = {
+  // 포트폴리오 메트릭 계산
+  portfolioMetrics: (transactions) => {
+    let totalInvested = 0;
+    let totalShares = 0;
+
+    transactions.forEach((tx) => {
+      if (tx.type === 'BUY') {
+        totalInvested += tx.total_amount + (tx.fee || 0);
+        totalShares += tx.quantity;
+      } else if (tx.type === 'SELL') {
+        const avgCost = totalInvested / totalShares;
+        totalInvested -= avgCost * tx.quantity;
+        totalShares -= tx.quantity;
+      }
+    });
+
+    return {
+      totalInvested,
+      totalShares,
+      avgCostPerShare: totalShares > 0 ? totalInvested / totalShares : 0,
+    };
+  },
+
   // 포트폴리오 수익률 계산
   portfolioROI: (totalValue, totalInvested) => {
     if (totalInvested === 0) return 0;

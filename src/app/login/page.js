@@ -94,8 +94,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center px-4 transition-colors login-page-bg">
+      <div className="max-w-md w-full rounded-lg shadow-lg p-8 login-card-bg">
         {/* 헤더 */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -229,7 +229,7 @@ export default function LoginPage() {
         </form>
 
         {/* 테스트 안내 */}
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-blue-800 dark:text-blue-300">
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm text-gray-900 dark:text-blue-300">
           <strong>💡 시작하기:</strong>
           <br />
           {isLogin ? (

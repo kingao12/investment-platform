@@ -1,3 +1,4 @@
+// src/hooks/useSupabase.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -87,6 +88,46 @@ export function usePortfolios(userId = null) {
     updatePortfolio,
     deletePortfolio,
     refresh: fetchPortfolios,
+  };
+}
+
+// 🔥 단일 포트폴리오 훅 (추가!)
+export function usePortfolio(portfolioId) {
+  const [portfolio, setPortfolio] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchPortfolio = async () => {
+    if (!portfolioId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await db.portfolios.getById(portfolioId);
+      
+      if (result.error) throw result.error;
+      
+      setPortfolio(result.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching portfolio:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPortfolio();
+  }, [portfolioId]);
+
+  return { 
+    portfolio, 
+    loading, 
+    error, 
+    refresh: fetchPortfolio 
   };
 }
 

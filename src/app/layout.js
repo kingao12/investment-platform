@@ -16,21 +16,44 @@ export default function RootLayout({ children }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // 🔥 다크모드 설정 로드 (localStorage에서)
   useEffect(() => {
     setMounted(true);
     const savedDarkMode = localStorage.getItem('darkMode');
+    console.log('🔍 로드된 darkMode:', savedDarkMode);
     if (savedDarkMode !== null) {
-      setDarkMode(savedDarkMode === 'true');
+      const isDark = savedDarkMode === 'true';
+      console.log('✅ 적용할 다크모드:', isDark);
+      setDarkMode(isDark);
     } else {
-      const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(systemDarkMode);
+      // localStorage에 없으면 기본값: 라이트 모드
+      console.log('💡 기본값 적용: 라이트 모드');
+      setDarkMode(false);
+      localStorage.setItem('darkMode', 'false');
     }
   }, []);
 
+  // 🔥 다크모드 변경시 HTML 클래스 직접 업데이트
+  useEffect(() => {
+    if (mounted) {
+      if (darkMode) {
+        document.documentElement.classList.add('dark');
+        console.log('🌙 다크모드 클래스 추가됨');
+      } else {
+        document.documentElement.classList.remove('dark');
+        console.log('☀️ 다크모드 클래스 제거됨');
+      }
+    }
+  }, [darkMode, mounted]);
+
+  // 🔥 다크모드 변경시 localStorage에 저장
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;
+    console.log('🌓 다크모드 전환:', darkMode ? '다크→라이트' : '라이트→다크');
+    console.log('📦 저장될 값:', newDarkMode);
     setDarkMode(newDarkMode);
     localStorage.setItem('darkMode', newDarkMode.toString());
+    console.log('✅ localStorage 저장 완료:', localStorage.getItem('darkMode'));
   };
 
   const menuItems = [
@@ -47,6 +70,8 @@ export default function RootLayout({ children }) {
   ];
 
   const isHomePage = pathname === '/';
+
+  // 🔥 SSR 깜빡임 방지 (hydration 완료 전까지 기본 스타일 표시)
   if (!mounted) {
     return (
       <html lang="ko">
