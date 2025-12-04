@@ -1,5 +1,3 @@
-// lib/apiServices.js
-
 // 🪙 CoinGecko API (암호화폐 가격)
 export const coinGeckoAPI = {
   baseURL: 'https://api.coingecko.com/api/v3',
