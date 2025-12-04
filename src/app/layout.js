@@ -13,8 +13,24 @@ export default function RootLayout({ children }) {
   const [darkMode, setDarkMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
   const router = useRouter();
   const pathname = usePathname();
+
+  // 🔥 로그인 상태 확인
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const name = localStorage.getItem('userName');
+    
+    if (userId) {
+      setIsLoggedIn(true);
+      setUserName(name || '사용자');
+    } else {
+      setIsLoggedIn(false);
+      setUserName('');
+    }
+  }, [pathname]); // pathname 변경시마다 체크
 
   // 🔥 다크모드 설정 로드 (localStorage에서)
   useEffect(() => {
@@ -62,7 +78,7 @@ export default function RootLayout({ children }) {
     { id: 'stock-chart', icon: BarChart3, label: '주식 차트', path: '/charts/stocks' },
     { id: 'community', icon: Users, label: '커뮤니티', path: '/community' },
     { id: 'journal', icon: BookOpen, label: '매매일지', path: '/trading-journal' },
-    { id: 'portfolio', icon: DollarSign, label: '수익률 관리', path: '/portfolio' },
+    { id: 'portfolio', icon: DollarSign, label: '수익률 관리', path: '/dashboard' },  // ← /portfolio → /dashboard 변경
     { id: 'news', icon: Newspaper, label: '뉴스', path: '/news' },
     { id: 'calendar', icon: Calendar, label: '경제 캘린더', path: '/calendar' },
     { id: 'sns', icon: Bell, label: 'SNS 피드', path: '/sns' },
@@ -137,13 +153,34 @@ export default function RootLayout({ children }) {
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <button 
-                onClick={() => router.push('/login')}
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <User size={18} />
-                <span className="hidden md:inline">로그인</span>
-              </button>
+              
+              {isLoggedIn ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {userName}님
+                  </span>
+                  <button 
+                    onClick={() => {
+                      localStorage.removeItem('userId');
+                      localStorage.removeItem('userName');
+                      setIsLoggedIn(false);
+                      router.push('/login');
+                    }}
+                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                  >
+                    <User size={18} />
+                    <span className="hidden md:inline">로그아웃</span>
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => router.push('/login')}
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                >
+                  <User size={18} />
+                  <span className="hidden md:inline">로그인</span>
+                </button>
+              )}
             </div>
           </div>
         </header>
