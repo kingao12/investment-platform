@@ -397,13 +397,19 @@ export default function NewsPage() {
     },
   ];
 
-
+  // ✅ 수정된 필터링 로직 - null 체크 추가
   const filteredNews = newsData.filter(news => {
     const matchesCategory = activeCategory === 'all' || 
                            (activeCategory === 'popular' && news.isPopular) ||
                            news.category === activeCategory;
-    const matchesSearch = news.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         news.ticker.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // ✅ null 안전 체크
+    const searchLower = searchTerm?.toLowerCase() || '';
+    const titleMatch = news.title?.toLowerCase().includes(searchLower) || false;
+    const tickerMatch = news.ticker ? news.ticker.toLowerCase().includes(searchLower) : false;
+    
+    const matchesSearch = titleMatch || tickerMatch;
+    
     return matchesCategory && matchesSearch;
   });
 
@@ -474,9 +480,12 @@ export default function NewsPage() {
                     인기
                   </div>
                 )}
-                <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
-                  {news.ticker}
-                </div>
+                {/* ✅ ticker가 null이 아닐 때만 표시 */}
+                {news.ticker && (
+                  <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    {news.ticker}
+                  </div>
+                )}
               </div>
 
               <div className="p-4">
