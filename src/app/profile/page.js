@@ -41,7 +41,6 @@ export default function ProfilePage() {
         email: userResult.data.email || '',
       });
 
-      // 포트폴리오 개수 가져오기
       const portfoliosResult = await db.portfolios.getByUserId(id);
       if (!portfoliosResult.error) {
         setPortfolioCount(portfoliosResult.data?.length || 0);
@@ -72,7 +71,7 @@ export default function ProfilePage() {
       alert('업데이트 중 오류가 발생했습니다.');
     }
   };
-
+  
   const handleLogout = () => {
     if (confirm('로그아웃 하시겠습니까?')) {
       localStorage.removeItem('userId');
