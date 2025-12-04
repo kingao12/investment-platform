@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { Home, TrendingUp, BarChart3, Users, BookOpen, DollarSign, Newspaper, Calendar, Bell, User, Menu, X, Sun, Moon, Search, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import EnvChecker from '@/components/EnvChecker'; // ✅ EnvChecker 추가
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -78,7 +79,7 @@ export default function RootLayout({ children }) {
     { id: 'stock-chart', icon: BarChart3, label: '주식 차트', path: '/charts/stocks' },
     { id: 'community', icon: Users, label: '커뮤니티', path: '/community' },
     { id: 'journal', icon: BookOpen, label: '매매일지', path: '/trading-journal' },
-    { id: 'portfolio', icon: DollarSign, label: '수익률 관리', path: '/dashboard' },  // ← /portfolio → /dashboard 변경
+    { id: 'portfolio', icon: DollarSign, label: '수익률 관리', path: '/dashboard' },
     { id: 'news', icon: Newspaper, label: '뉴스', path: '/news' },
     { id: 'calendar', icon: Calendar, label: '경제 캘린더', path: '/calendar' },
     { id: 'sns', icon: Bell, label: 'SNS 피드', path: '/sns' },
@@ -103,117 +104,120 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ko" className={darkMode ? 'dark' : ''}>
       <body className={`${inter.className} ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
-        {/* Header */}
-        <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50`}>
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center space-x-4">
-              {!isHomePage && (
+        {/* ✅ EnvChecker로 전체 앱 감싸기 */}
+        <EnvChecker>
+          {/* Header */}
+          <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b sticky top-0 z-50`}>
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center space-x-4">
+                {!isHomePage && (
+                  <button
+                    onClick={() => router.push('/')}
+                    className={`p-2 rounded-lg flex items-center space-x-2 ${
+                      darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <ArrowLeft size={20} />
+                    <span className="hidden md:inline text-sm font-medium">홈으로</span>
+                  </button>
+                )}
                 <button
-                  onClick={() => router.push('/')}
-                  className={`p-2 rounded-lg flex items-center space-x-2 ${
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                >
+                  {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+                <Link href="/">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer">
+                    투자정보 플랫폼
+                  </h1>
+                </Link>
+              </div>
+
+              <div className="flex items-center space-x-4">
+                <div className={`hidden md:flex items-center rounded-lg px-4 py-2 ${
+                  darkMode ? 'bg-gray-700' : 'bg-gray-100'
+                }`}>
+                  <Search size={18} className="text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="뉴스, 종목명, 티커 검색..."
+                    className={`bg-transparent border-none outline-none ml-2 w-64 ${
+                      darkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
+                    }`}
+                  />
+                </div>
+                <button
+                  onClick={toggleDarkMode}
+                  className={`p-2 rounded-lg transition-colors ${
                     darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                   }`}
+                  title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
                 >
-                  <ArrowLeft size={20} />
-                  <span className="hidden md:inline text-sm font-medium">홈으로</span>
+                  {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
-              )}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-              >
-                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-              <Link href="/">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent cursor-pointer">
-                  투자정보 플랫폼
-                </h1>
-              </Link>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <div className={`hidden md:flex items-center rounded-lg px-4 py-2 ${
-                darkMode ? 'bg-gray-700' : 'bg-gray-100'
-              }`}>
-                <Search size={18} className="text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="뉴스, 종목명, 티커 검색..."
-                  className={`bg-transparent border-none outline-none ml-2 w-64 ${
-                    darkMode ? 'text-white placeholder-gray-400' : 'text-gray-900 placeholder-gray-500'
-                  }`}
-                />
-              </div>
-              <button
-                onClick={toggleDarkMode}
-                className={`p-2 rounded-lg transition-colors ${
-                  darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                }`}
-                title={darkMode ? '라이트 모드로 전환' : '다크 모드로 전환'}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              
-              {isLoggedIn ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {userName}님
-                  </span>
+                
+                {isLoggedIn ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      {userName}님
+                    </span>
+                    <button 
+                      onClick={() => {
+                        localStorage.removeItem('userId');
+                        localStorage.removeItem('userName');
+                        setIsLoggedIn(false);
+                        router.push('/login');
+                      }}
+                      className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                    >
+                      <User size={18} />
+                      <span className="hidden md:inline">로그아웃</span>
+                    </button>
+                  </div>
+                ) : (
                   <button 
-                    onClick={() => {
-                      localStorage.removeItem('userId');
-                      localStorage.removeItem('userName');
-                      setIsLoggedIn(false);
-                      router.push('/login');
-                    }}
-                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                    onClick={() => router.push('/login')}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
                     <User size={18} />
-                    <span className="hidden md:inline">로그아웃</span>
+                    <span className="hidden md:inline">로그인</span>
                   </button>
-                </div>
-              ) : (
-                <button 
-                  onClick={() => router.push('/login')}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                >
-                  <User size={18} />
-                  <span className="hidden md:inline">로그인</span>
-                </button>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <div className="flex min-h-screen">
-          {sidebarOpen && (
-            <aside className={`w-64 border-r ${
-              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-            }`}>
-              <nav className="p-4 space-y-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.path;
-                  return (
-                    <Link key={item.id} href={item.path}>
-                      <div className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
-                        isActive 
-                          ? 'bg-blue-600 text-white' 
-                          : darkMode 
-                            ? 'hover:bg-gray-700 text-gray-200' 
-                            : 'hover:bg-gray-100 text-gray-900'
-                      }`}>
-                        <Icon size={20} />
-                        <span className="font-medium">{item.label}</span>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </nav>
-            </aside>
-          )}
-          <main className="flex-1">{children}</main>
-        </div>
+          <div className="flex min-h-screen">
+            {sidebarOpen && (
+              <aside className={`w-64 border-r ${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              }`}>
+                <nav className="p-4 space-y-2">
+                  {menuItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.path;
+                    return (
+                      <Link key={item.id} href={item.path}>
+                        <div className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors cursor-pointer ${
+                          isActive 
+                            ? 'bg-blue-600 text-white' 
+                            : darkMode 
+                              ? 'hover:bg-gray-700 text-gray-200' 
+                              : 'hover:bg-gray-100 text-gray-900'
+                        }`}>
+                          <Icon size={20} />
+                          <span className="font-medium">{item.label}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </aside>
+            )}
+            <main className="flex-1">{children}</main>
+          </div>
+        </EnvChecker>
       </body>
     </html>
   );

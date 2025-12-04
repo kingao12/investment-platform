@@ -1,25 +1,98 @@
 // src/lib/supabase.js
 import { createClient } from '@supabase/supabase-js';
 
-// 환경변수에서 가져오기
+// ===== 환경변수 체크 및 설정 =====
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Supabase 클라이언트 생성
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// ✅ 환경변수 검증
+if (!supabaseUrl || !supabaseKey) {
+  console.error('❌ Supabase 환경변수가 설정되지 않았습니다!');
+  console.error('필요한 환경변수:');
+  console.error('- NEXT_PUBLIC_SUPABASE_URL');
+  console.error('- NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  console.error('\nVercel 대시보드 > Settings > Environment Variables에서 설정해주세요.');
+}
+
+// ✅ localStorage 안전하게 사용
+const isBrowser = typeof window !== 'undefined';
+
+// ✅ 커스텀 스토리지 어댑터 (localStorage 에러 방지)
+const customStorageAdapter = {
+  getItem: (key) => {
+    try {
+      if (!isBrowser) return null;
+      return window.localStorage.getItem(key);
+    } catch (error) {
+      console.warn('localStorage getItem 에러:', error.message);
+      return null;
+    }
+  },
+  setItem: (key, value) => {
+    try {
+      if (!isBrowser) return;
+      window.localStorage.setItem(key, value);
+    } catch (error) {
+      console.warn('localStorage setItem 에러:', error.message);
+    }
+  },
+  removeItem: (key) => {
+    try {
+      if (!isBrowser) return;
+      window.localStorage.removeItem(key);
+    } catch (error) {
+      console.warn('localStorage removeItem 에러:', error.message);
+    }
+  },
+};
+
+// ✅ Supabase 클라이언트 생성
+export const supabase = createClient(
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseKey || 'placeholder-key',
+  {
+    auth: {
+      storage: customStorageAdapter,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      storageKey: 'supabase.auth.token',
+      flowType: 'pkce',
+    },
+    global: {
+      headers: {
+        'x-application-name': 'investment-platform',
+      },
+    },
+  }
+);
+
+// ✅ 환경변수 검증 헬퍼 함수
+export const isSupabaseConfigured = () => {
+  return !!(
+    supabaseUrl && 
+    supabaseKey && 
+    supabaseUrl !== 'https://placeholder.supabase.co' &&
+    supabaseKey !== 'placeholder-key'
+  );
+};
 
 // 🔥 간편한 데이터베이스 함수들
 export const db = {
   // ===== Users =====
   users: {
-    // 모든 사용자 가져오기
     getAll: async () => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase.from('users').select('*');
       return { data, error };
     },
     
-    // ID로 사용자 찾기
     getById: async (id) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -28,8 +101,10 @@ export const db = {
       return { data, error };
     },
     
-    // 이메일로 사용자 찾기
     getByEmail: async (email) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -38,8 +113,10 @@ export const db = {
       return { data, error };
     },
     
-    // 사용자 생성
     create: async (userData) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('users')
         .insert([userData])
@@ -48,8 +125,10 @@ export const db = {
       return { data, error };
     },
     
-    // 사용자 업데이트
     update: async (id, updates) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('users')
         .update(updates)
@@ -62,8 +141,10 @@ export const db = {
 
   // ===== Portfolios =====
   portfolios: {
-    // 모든 포트폴리오 가져오기 (투자 내역 포함)
     getAll: async () => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('portfolios')
         .select(`
@@ -77,8 +158,10 @@ export const db = {
       return { data, error };
     },
     
-    // ID로 포트폴리오 가져오기
     getById: async (id) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('portfolios')
         .select(`
@@ -94,8 +177,10 @@ export const db = {
       return { data, error };
     },
     
-    // 사용자별 포트폴리오
     getByUserId: async (userId) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('portfolios')
         .select(`
@@ -109,8 +194,10 @@ export const db = {
       return { data, error };
     },
     
-    // 포트폴리오 생성
     create: async (portfolioData) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('portfolios')
         .insert([portfolioData])
@@ -119,8 +206,10 @@ export const db = {
       return { data, error };
     },
     
-    // 포트폴리오 업데이트
     update: async (id, updates) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('portfolios')
         .update(updates)
@@ -130,8 +219,10 @@ export const db = {
       return { data, error };
     },
     
-    // 포트폴리오 삭제
     delete: async (id) => {
+      if (!isSupabaseConfigured()) {
+        return { error: new Error('Supabase not configured') };
+      }
       const { error } = await supabase
         .from('portfolios')
         .delete()
@@ -142,8 +233,10 @@ export const db = {
 
   // ===== Investments =====
   investments: {
-    // 모든 투자 가져오기
     getAll: async () => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('investments')
         .select(`
@@ -154,8 +247,10 @@ export const db = {
       return { data, error };
     },
     
-    // 포트폴리오별 투자
     getByPortfolioId: async (portfolioId) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('investments')
         .select(`
@@ -166,8 +261,10 @@ export const db = {
       return { data, error };
     },
     
-    // 투자 생성
     create: async (investmentData) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('investments')
         .insert([investmentData])
@@ -176,8 +273,10 @@ export const db = {
       return { data, error };
     },
     
-    // 투자 업데이트
     update: async (id, updates) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('investments')
         .update(updates)
@@ -187,8 +286,10 @@ export const db = {
       return { data, error };
     },
     
-    // 투자 삭제
     delete: async (id) => {
+      if (!isSupabaseConfigured()) {
+        return { error: new Error('Supabase not configured') };
+      }
       const { error } = await supabase
         .from('investments')
         .delete()
@@ -199,8 +300,10 @@ export const db = {
 
   // ===== Transactions =====
   transactions: {
-    // 모든 거래 가져오기
     getAll: async () => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -211,8 +314,10 @@ export const db = {
       return { data, error };
     },
     
-    // 투자별 거래 내역
     getByInvestmentId: async (investmentId) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -221,8 +326,10 @@ export const db = {
       return { data, error };
     },
     
-    // 거래 생성
     create: async (transactionData) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('transactions')
         .insert([transactionData])
@@ -231,8 +338,10 @@ export const db = {
       return { data, error };
     },
     
-    // 거래 업데이트
     update: async (id, updates) => {
+      if (!isSupabaseConfigured()) {
+        return { data: null, error: new Error('Supabase not configured') };
+      }
       const { data, error } = await supabase
         .from('transactions')
         .update(updates)
@@ -242,8 +351,10 @@ export const db = {
       return { data, error };
     },
     
-    // 거래 삭제
     delete: async (id) => {
+      if (!isSupabaseConfigured()) {
+        return { error: new Error('Supabase not configured') };
+      }
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -255,7 +366,6 @@ export const db = {
 
 // 🧮 계산 헬퍼 함수들
 export const calculate = {
-  // 포트폴리오 메트릭 계산
   portfolioMetrics: (transactions) => {
     let totalInvested = 0;
     let totalShares = 0;
@@ -278,13 +388,11 @@ export const calculate = {
     };
   },
 
-  // 포트폴리오 수익률 계산
   portfolioROI: (totalValue, totalInvested) => {
     if (totalInvested === 0) return 0;
     return ((totalValue - totalInvested) / totalInvested) * 100;
   },
   
-  // 평균 매입가 계산
   averageCost: (transactions) => {
     let totalAmount = 0;
     let totalQuantity = 0;
@@ -302,7 +410,6 @@ export const calculate = {
 
 // 💰 포맷 함수들
 export const format = {
-  // 통화 포맷
   currency: (amount) => {
     return new Intl.NumberFormat('ko-KR', {
       style: 'currency',
@@ -310,14 +417,94 @@ export const format = {
     }).format(amount);
   },
   
-  // 퍼센트 포맷
   percent: (value) => {
     const sign = value >= 0 ? '+' : '';
     return `${sign}${value.toFixed(2)}%`;
   },
   
-  // 날짜 포맷
   date: (date) => {
     return new Date(date).toLocaleDateString('ko-KR');
+  },
+};
+
+// ✅ 인증 헬퍼 함수
+export const authHelpers = {
+  getCurrentUser: async () => {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured');
+      return null;
+    }
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    } catch (error) {
+      console.error('사용자 조회 에러:', error);
+      return null;
+    }
+  },
+
+  getSession: async () => {
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured');
+      return null;
+    }
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    } catch (error) {
+      console.error('세션 조회 에러:', error);
+      return null;
+    }
+  },
+
+  signOut: async () => {
+    if (!isSupabaseConfigured()) {
+      return { success: false, error: 'Supabase not configured' };
+    }
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('로그아웃 에러:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  signIn: async (email, password) => {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { data, error };
+    } catch (error) {
+      console.error('로그인 에러:', error);
+      return { data: null, error };
+    }
+  },
+
+  signUp: async (email, password, userData) => {
+    if (!isSupabaseConfigured()) {
+      return { data: null, error: new Error('Supabase not configured') };
+    }
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData,
+        },
+      });
+      return { data, error };
+    } catch (error) {
+      console.error('회원가입 에러:', error);
+      return { data: null, error };
+    }
   },
 };
